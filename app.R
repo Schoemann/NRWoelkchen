@@ -27,6 +27,93 @@ library("shinydashboard")
 library("shinyWidgets")
 library("tools")
 
+word_count = function(link,stem = FALSE, stop_language = "ger") {
+  # integrate file extension detection
+  file_extension = tools::file_ext(link)
+  valid_file_ext = c("pdf", "txt", "html", "rtf", "docx", "doc")
+  if (!file_extension %in% valid_file_ext) {
+    stop(paste("invalid file extension. Must be one of", paste0(valid_file_ext,sep = "",collapse = ", ")))
+  }
+  # switch depending upon file_extension until stemming
+  word_text = switch(file_extension,
+                     pdf = {
+                       textreadr::read_document(link)
+                     },
+                     {
+                       textreadr::read_document(link,encoding = "UTF-8")
+                     }
+  )
+  word_text = word_text %>%  #returns vector of length of pages!
+    strsplit(.,"\n") %>%                  #split vector by row breaks
+    unlist() %>%                          #coerce to string vectors
+    strsplit(.,"\r") %>%                  #split vector by breaks
+    trimws(.) %>%                         #remove whitespaces at beginning or end
+    paste0(.,collapse = " ") %>%          #make one large character vector
+    gsub("  "," ",.) %>%                  #remove double spaces
+    gsub('„',"",.) %>%                    #remove quotation marks
+    gsub("“","",.)                        #dito
+  
+  if (stem == T) { # doesnt work well with german data
+    word_text = stemDocument(word_text,language = stop_language)
+  }
+  
+  
+  df = data.frame(doc_id = seq(1,length(word_text)),
+                  text = word_text, 
+                  stringsAsFactors = FALSE)
+  
+  
+  df_corpus = Corpus(DataframeSource(df))
+  
+  docs = df_corpus %>% 
+    tm_map(.,removeWords,stopwords(stop_language)) %>% #removing stopwords
+    tm_map(.,removePunctuation)                #removing punctuation
+  
+  
+  df = TermDocumentMatrix(docs,                #create Matrix of Word counts
+                          control = list(tolower = FALSE)) %>% 
+    as.matrix(.) %>%                           
+    as.data.frame(.) %>% 
+    mutate(freq = `1`,
+           word = row.names(.)) %>% 
+    select(word,freq)
+  
+  
+  df$word = gsub("“","",df$word)
+  
+  #stopwords with capital at the beginning
+  stopwords2 = lapply(1:length(stopwords(stop_language)),FUN = function(x) {
+    paste0(toupper(substr(stopwords(stop_language)[x],1,1)),substr(stopwords("ger")[x],2,nchar(stopwords("ger")[x])))
+  }) %>% 
+    unlist(.)
+  
+  #build flag vector if a stopword matches the word in matrix
+  flag = unlist(lapply(1:nrow(df),
+                       FUN = function(x) {
+                         df$word[x] %in% c(stopwords(stop_language),"dass",
+                                           stopwords2,"Dass")
+                       }
+  )
+  ) 
+  
+  flag[grepl("–",as.character(df$word))] = TRUE # removing hyphen
+  
+  
+  df = df %>% 
+    filter(!flag) %>%                              #removing stopwords
+    filter(nchar(word) > 3 | substr(word,1,1) %in% LETTERS) %>%                    #keeping words with more than 2 letters
+    group_by(word) %>%                             #summarizing same words and...
+    summarize(freq = sum(freq)) %>%                #counting them..
+    ungroup(.) %>% 
+    select(word,freq) %>%                       # keeping word, frequency and percentage
+    arrange(desc(freq)) %>% 
+    mutate(word2 = word) %>% 
+    tibble::column_to_rownames(.,var = "word2") %>% 
+    select(word,freq)
+  #return df 
+  df
+}
+
 # setting seed
 set.seed(42)
 
@@ -78,11 +165,11 @@ wordcloud_page = tabPanel(
           value = FALSE,
           status = "info"
           )
-        ),
-      downloadButton(
-        "downloadButton_wc",
-        "Download Wordcloud"
-        )
+        ) #,
+      # downloadButton(
+      #   "downloadButton_wc",
+      #   "Download Wordcloud"
+      #   )
       ) # closing well panel
   ), # closing sidebar
   # main panel
@@ -674,92 +761,6 @@ ui <- navbarPage(
 
 server = function(input, output, session) {
 # function to read documents ----
-  word_count = function(link,stem = FALSE, stop_language = "ger") {
-    # integrate file extension detection
-    file_extension = tools::file_ext(link)
-    valid_file_ext = c("pdf", "txt", "html", "rtf", "docx", "doc")
-    if (!file_extension %in% valid_file_ext) {
-      stop(paste("invalid file extension. Must be one of", paste0(valid_file_ext,sep = "",collapse = ", ")))
-    }
-    # switch depending upon file_extension until stemming
-    word_text = switch(file_extension,
-                       pdf = {
-                         textreadr::read_document(link)
-                       },
-                       {
-                         textreadr::read_document(link,encoding = "UTF-8")
-                       }
-    )
-    word_text = word_text %>%  #returns vector of length of pages!
-      strsplit(.,"\n") %>%                  #split vector by row breaks
-      unlist() %>%                          #coerce to string vectors
-      strsplit(.,"\r") %>%                  #split vector by breaks
-      trimws(.) %>%                         #remove whitespaces at beginning or end
-      paste0(.,collapse = " ") %>%          #make one large character vector
-      gsub("  "," ",.) %>%                  #remove double spaces
-      gsub('„',"",.) %>%                    #remove quotation marks
-      gsub("“","",.)                        #dito
-    
-    if (stem == T) { # doesnt work well with german data
-      word_text = stemDocument(word_text,language = stop_language)
-    }
-    
-    
-    df = data.frame(doc_id = seq(1,length(word_text)),
-                    text = word_text, 
-                    stringsAsFactors = FALSE)
-    
-    
-    df_corpus = Corpus(DataframeSource(df))
-    
-    docs = df_corpus %>% 
-      tm_map(.,removeWords,stopwords(stop_language)) %>% #removing stopwords
-      tm_map(.,removePunctuation)                #removing punctuation
-    
-    
-    df = TermDocumentMatrix(docs,                #create Matrix of Word counts
-                            control = list(tolower = FALSE)) %>% 
-      as.matrix(.) %>%                           
-      as.data.frame(.) %>% 
-      mutate(freq = `1`,
-             word = row.names(.)) %>% 
-      select(word,freq)
-    
-    
-    df$word = gsub("“","",df$word)
-    
-    #stopwords with capital at the beginning
-    stopwords2 = lapply(1:length(stopwords(stop_language)),FUN = function(x) {
-      paste0(toupper(substr(stopwords(stop_language)[x],1,1)),substr(stopwords("ger")[x],2,nchar(stopwords("ger")[x])))
-    }) %>% 
-      unlist(.)
-    
-    #build flag vector if a stopword matches the word in matrix
-    flag = unlist(lapply(1:nrow(df),
-                         FUN = function(x) {
-                           df$word[x] %in% c(stopwords(stop_language),"dass",
-                                             stopwords2,"Dass")
-                         }
-    )
-    ) 
-    
-    flag[grepl("–",as.character(df$word))] = TRUE # removing hyphen
-    
-    
-    df = df %>% 
-      filter(!flag) %>%                              #removing stopwords
-      filter(nchar(word) > 3 | substr(word,1,1) %in% LETTERS) %>%                    #keeping words with more than 2 letters
-      group_by(word) %>%                             #summarizing same words and...
-      summarize(freq = sum(freq)) %>%                #counting them..
-      ungroup(.) %>% 
-      select(word,freq) %>%                       # keeping word, frequency and percentage
-      arrange(desc(freq)) %>% 
-      mutate(word2 = word) %>% 
-      tibble::column_to_rownames(.,var = "word2") %>% 
-      select(word,freq)
-    #return df 
-    df
-  }
   getPage = function() {
     return(
       includeHTML("nrw_woelkchen.html")
