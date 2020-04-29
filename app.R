@@ -235,34 +235,34 @@ fluidRow(
   )
 ), # closing second fluid row
 #document analysis summary
-# fluidRow(
-#   column(4,
-#          shinydashboard::infoBox(
-#            "Wörter im Dokument", 
-#            uiOutput("words_total_wc"), 
-#            subtitle = "Anzahl Wörter", 
-#            icon = icon("book-open",lib = "font-awesome")
-#          )
-#   ),
-#   column(4,
-#          shinydashboard::infoBox(
-#            title = "Top", 
-#            value = uiOutput("words_top_wc"),
-#            subtitle = "Häufigstes Wort",
-#            icon = icon("trophy",lib = "font-awesome"),
-#            color = "purple"
-#          )
-#   ),
-#   column(
-#     width = 4,
-#     shinydashboard::infoBox(
-#       "mittlere Wortlänge", 
-#       uiOutput("words_mean_wc"), 
-#       subtitle = "Buchstaben pro Wort", 
-#       icon = icon("poll",lib = "font-awesome")
-#     )
-#   )
-# ), # closing third fluid row (boxes)
+fluidRow(
+  column(4,
+         shinydashboard::infoBox(
+           "Wörter im Dokument",
+           uiOutput("words_total_wc"),
+           subtitle = "Anzahl Wörter",
+           icon = icon("book-open",lib = "font-awesome")
+         )
+  ),
+  column(4,
+         shinydashboard::infoBox(
+           title = "Top",
+           value = uiOutput("words_top_wc"),
+           subtitle = "Häufigstes Wort",
+           icon = icon("trophy",lib = "font-awesome"),
+           color = "purple"
+         )
+  ),
+  column(
+    width = 4,
+    shinydashboard::infoBox(
+      "mittlere Wortlänge",
+      uiOutput("words_mean_wc"),
+      subtitle = "Buchstaben pro Wort",
+      icon = icon("poll",lib = "font-awesome")
+    )
+  )
+), # closing third fluid row (boxes)
 # Table of words
 fluidRow(
   column(12,
