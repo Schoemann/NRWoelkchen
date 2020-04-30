@@ -217,11 +217,16 @@ wordcloud_page = tabPanel(
           inputId = "select_font_wc",
           label = "Schriftart",
           choices = list(
-            "Arial" = "Segoe UI",
-            "Times New Roman" = "serif",
-            "Courier" = "mono"
-          ),
-          selected = "Segoe UI"
+            # "Arial" = "Segoe UI",
+            # "Times New Roman" = "serif",
+            # "Courier" = "mono"
+            "Arial" = "Arial",
+            "Times New Roman" = "Times New Roman",
+            "NRW-Design" = c(
+              "Benton" = "Benton"
+              )
+            ),
+          selected = "Benton"
         )
       ),
       tabPanel(
@@ -461,7 +466,8 @@ lettercloud_page = tabPanel(
                   "Sonnenblau" = "#009ee0",
                   "Wiesengrün" = "#b1c800",
                   "Sonnengelb" = "#f29400",
-                  "Blutorange" = "#e75112"),
+                  "Blutorange" = "#e75112"
+                  ),
                 "bunt" = c(
                   "hell" = "random-light",
                   "dunkel" = "random-dark"
@@ -642,6 +648,7 @@ picturecloud_page = tabPanel(
             shiny::selectInput(
               inputId = "select_font_color_pc", 
               label = "Schriftfarbe",
+              multiple = T,
               choices = list(
                 "einfarbig" = c(
                   "Schwarz" = "#000000",
@@ -659,7 +666,8 @@ picturecloud_page = tabPanel(
                   "hell" = "random-light",
                   "dunkel" = "random-dark"
                 )
-              )
+              ),
+              selected = "#000000",
             )
           ),
           tabPanel(
