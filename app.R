@@ -365,9 +365,8 @@ fluidRow(
 
 # Lettercloud page ----
 lettercloud_page = tabPanel(
-  #"Textwolken",
-  title = HTML('Textwolken <span class="label label-warning">beta</span>'),
-  #icon = icon("beta"),
+  title = "Textwolken",
+  #title = HTML('Textwolken <span class="label label-warning">beta</span>'),
   fluidRow(
     column(
       3,
@@ -667,7 +666,7 @@ picturecloud_page = tabPanel(
                   "dunkel" = "random-dark"
                 )
               ),
-              selected = "#000000",
+              selected = "#000000"
             )
           ),
           tabPanel(
