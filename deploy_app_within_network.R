@@ -7,13 +7,15 @@
 
 #Pfad zur Package-Bibliothek
 .libPaths()
-
-folder_address = 'H:/NRWoelkchen/app.R' # ordnerpfad zu app.R
+library(shiny)
+setwd('H:/R-Stuff/NRWoelkchen-master') # ordnerpfad zu app.R
 
 x = system("ipconfig", intern = TRUE)
 z = x[grep("IPv4", x)]
 ip = gsub(".*? ([[:digit:]])", "\\1", z)
-port = 80L
-cat(paste0("running on: http://", ip, ":", port, "/"))
 
-runApp(folder_address, launch.browser = TRUE, port = port, host = ip[2])
+options(shiny.host = '0.0.0.0')        # standard (nicht anpassen)
+options(shiny.port = 8888)             # port muss freigegeben sein (ggf. anpassen)
+
+message(paste0("running on: http://", ip, ":", options("shiny.port"), "/"))
+runApp()
